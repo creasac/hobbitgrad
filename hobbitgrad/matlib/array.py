@@ -68,6 +68,20 @@ class NDArray:
     def __transpose__(self):
         return NDArray(self.data, tuple(reversed(self.shape)), tuple(reversed(self.strides)))
     
+    def __matmul__(self, other):
+        if len(self.shape) != 2 or len(other.shape) != 2:
+            raise ValueError(f"Expected Shape 2D, got {self.shape} and {other.shape}")
+        if self.shape[1] != other.shape[0]:
+            raise ValueError(f"Shape mismatch: {self.shape} and {other.shape}")
+        
+        m, n, p = self.shape[0], self.shape[1], other.shape[1]
+        result = NDArray([[0] * p for _ in range(m)])
+
+        for i in range(m):
+            for j in range(p):
+                result[(i, j)] = sum(self[(i, k)] * other[(k, j)] for k in range(n))
+        return result
+
     def __getitem__(self, indices):
         if not isinstance(indices, tuple):
             indices = (indices,)

@@ -212,3 +212,43 @@ def test_transpose_is_not_contiguous():
 
     assert transposed._is_contiguous() is False
     assert transposed._contiguous_data() == [1, 4, 2, 5, 3, 6]
+
+
+def test_matmul_returns_matrix_product():
+    left = NDArray([[1, 2, 3], [4, 5, 6]])
+    right = NDArray([[7, 8], [9, 10], [11, 12]])
+
+    out = left @ right
+
+    assert out.shape == (2, 2)
+    assert out.data == [58, 64, 139, 154]
+    assert out[(0, 0)] == 58
+    assert out[(0, 1)] == 64
+    assert out[(1, 0)] == 139
+    assert out[(1, 1)] == 154
+
+
+def test_matmul_with_transposed_operand():
+    left = NDArray([[1, 2, 3], [4, 5, 6]])
+    right = NDArray([[7, 9, 11], [8, 10, 12]]).__transpose__()
+
+    out = left @ right
+
+    assert out.shape == (2, 2)
+    assert out.data == [58, 64, 139, 154]
+
+
+def test_matmul_rejects_non_2d_operands():
+    left = NDArray([1, 2, 3])
+    right = NDArray([[1], [2], [3]])
+
+    with pytest.raises(ValueError, match="Expected Shape 2D"):
+        left @ right
+
+
+def test_matmul_rejects_mismatched_shapes():
+    left = NDArray([[1, 2], [3, 4]])
+    right = NDArray([[1, 2], [3, 4], [5, 6]])
+
+    with pytest.raises(ValueError, match="Shape mismatch"):
+        left @ right

@@ -1,3 +1,5 @@
+import pytest
+
 from matlib import NDArray
 
 
@@ -80,3 +82,133 @@ def test_getitem_3d():
     assert arr[(0, 1, 0)] == 2
     assert arr[(1, 0, 0)] == 3
     assert arr[(1, 1, 0)] == 4
+
+
+def test_setitem_1d():
+    arr = NDArray([10, 20, 30])
+
+    arr[1] = 99
+
+    assert arr[1] == 99
+    assert arr.data == [10, 99, 30]
+
+
+def test_setitem_2d():
+    arr = NDArray([[1, 2], [3, 4]])
+
+    arr[(1, 0)] = 99
+
+    assert arr[(1, 0)] == 99
+    assert arr.data == [1, 2, 99, 4]
+
+
+def test_setitem_3d():
+    arr = NDArray([
+        [[1], [2]],
+        [[3], [4]],
+    ])
+
+    arr[(0, 1, 0)] = 99
+
+    assert arr[(0, 1, 0)] == 99
+    assert arr.data == [1, 99, 3, 4]
+
+
+def test_total_elements():
+    arr = NDArray([[1, 2], [3, 4]])
+
+    assert arr._total_elements((2, 2)) == 4
+    assert arr._total_elements((4, 1)) == 4
+    assert arr._total_elements(()) == 1
+
+
+def test_is_contiguous():
+    arr = NDArray([[1, 2], [3, 4]])
+
+    assert arr._is_contiguous() is True
+
+
+def test_contiguous_data():
+    arr = NDArray([[1, 2], [3, 4]])
+
+    assert arr._contiguous_data() == [1, 2, 3, 4]
+
+
+def test_reshape_1d_to_2d():
+    arr = NDArray([1, 2, 3, 4])
+
+    reshaped = arr.__reshape__((2, 2))
+
+    assert reshaped.shape == (2, 2)
+    assert reshaped.data == [1, 2, 3, 4]
+    assert reshaped[(0, 0)] == 1
+    assert reshaped[(0, 1)] == 2
+    assert reshaped[(1, 0)] == 3
+    assert reshaped[(1, 1)] == 4
+
+
+def test_reshape_2d_to_1d():
+    arr = NDArray([[1, 2], [3, 4]])
+
+    reshaped = arr.__reshape__((4,))
+
+    assert reshaped.shape == (4,)
+    assert reshaped.data == [1, 2, 3, 4]
+    assert reshaped[0] == 1
+    assert reshaped[3] == 4
+
+
+def test_reshape_shape_mismatch():
+    arr = NDArray([1, 2, 3, 4])
+
+    with pytest.raises(AssertionError, match="Shape mismatch"):
+        arr.__reshape__((3, 2))
+
+
+def test_transpose_2d():
+    arr = NDArray([[1, 2, 3], [4, 5, 6]])
+
+    transposed = arr.__transpose__()
+
+    assert transposed.shape == (3, 2)
+    assert transposed.strides == (1, 3)
+    assert transposed[(0, 0)] == 1
+    assert transposed[(0, 1)] == 4
+    assert transposed[(1, 0)] == 2
+    assert transposed[(2, 1)] == 6
+
+
+def test_transpose_3d():
+    arr = NDArray([
+        [[1, 2], [3, 4]],
+        [[5, 6], [7, 8]],
+    ])
+
+    transposed = arr.__transpose__()
+
+    assert transposed.shape == (2, 2, 2)
+    assert transposed.strides == (1, 2, 4)
+    assert transposed[(0, 0, 0)] == 1
+    assert transposed[(1, 0, 0)] == 2
+    assert transposed[(0, 1, 0)] == 3
+    assert transposed[(1, 1, 1)] == 8
+
+
+def test_transpose_setitem_updates_original_data():
+    arr = NDArray([[1, 2], [3, 4]])
+    transposed = arr.__transpose__()
+
+    transposed[(0, 1)] = 99
+
+    assert transposed[(0, 1)] == 99
+    assert arr[(1, 0)] == 99
+    assert arr.data == [1, 2, 99, 4]
+
+
+def test_transpose_is_not_contiguous():
+    arr = NDArray([[1, 2, 3], [4, 5, 6]])
+
+    transposed = arr.__transpose__()
+
+    assert transposed._is_contiguous() is False
+    assert transposed._contiguous_data() == [1, 4, 2, 5, 3, 6]

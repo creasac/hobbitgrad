@@ -1,6 +1,6 @@
 import pytest
 
-from matlib import NDArray
+from hobbitgrad.matlib import NDArray
 
 
 def test_flatten_1d():

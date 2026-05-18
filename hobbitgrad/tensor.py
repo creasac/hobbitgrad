@@ -31,3 +31,14 @@ class Tensor:
 
         out._backward = _backward
         return out
+
+    def __add__(self, other):
+        out = Tensor(self.data + other.data)
+        out._prev = {self, other}
+
+        def _backward():
+            self.grad += out.grad
+            other.grad += out.grad
+        
+        out._backward = _backward
+        return out

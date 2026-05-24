@@ -48,6 +48,20 @@ def test_nested_empty_list():
     assert arr.shape == (2, 0)
 
 
+def test_zeros_creates_array_with_shape():
+    arr = NDArray.zeros((2, 3))
+
+    assert arr.shape == (2, 3)
+    assert arr.data == [0, 0, 0, 0, 0, 0]
+
+
+def test_ones_creates_array_with_shape():
+    arr = NDArray.ones((2, 3))
+
+    assert arr.shape == (2, 3)
+    assert arr.data == [1, 1, 1, 1, 1, 1]
+
+
 def test_mixed_types():
     arr = NDArray([[1, "a"], [3.5, True]])
 
@@ -236,6 +250,44 @@ def test_matmul_with_transposed_operand():
 
     assert out.shape == (2, 2)
     assert out.data == [58, 64, 139, 154]
+
+
+def test_mul_returns_elementwise_product():
+    left = NDArray([[1, 2], [3, 4]])
+    right = NDArray([[5, 6], [7, 8]])
+
+    out = left * right
+
+    assert out.shape == (2, 2)
+    assert out.data == [5, 12, 21, 32]
+
+
+def test_mul_with_scalar_returns_scaled_array():
+    arr = NDArray([[1, 2], [3, 4]])
+
+    out = arr * 3
+
+    assert out.shape == (2, 2)
+    assert out.data == [3, 6, 9, 12]
+
+
+def test_add_returns_elementwise_sum():
+    left = NDArray([[1, 2], [3, 4]])
+    right = NDArray([[5, 6], [7, 8]])
+
+    out = left + right
+
+    assert out.shape == (2, 2)
+    assert out.data == [6, 8, 10, 12]
+
+
+def test_add_with_scalar_returns_shifted_array():
+    arr = NDArray([[1, 2], [3, 4]])
+
+    out = arr + 10
+
+    assert out.shape == (2, 2)
+    assert out.data == [11, 12, 13, 14]
 
 
 def test_matmul_rejects_non_2d_operands():

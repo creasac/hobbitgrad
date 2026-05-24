@@ -1,4 +1,4 @@
-from hobbitgrad.matlib import NDArray
+from hobbitgrad.array import NDArray
 
 class Tensor:
     def __init__(self, data):

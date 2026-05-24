@@ -1,4 +1,5 @@
 import itertools
+import random
 
 class NDArray:
     def __init__(self, data, shape=None, strides=None):
@@ -23,6 +24,14 @@ class NDArray:
         def make_nested(shape):
             if len(shape) == 1:
                 return [1] * shape[0]
+            return [make_nested(shape[1:]) for _ in range(shape[0])]
+        return cls(make_nested(shape))
+    
+    @classmethod
+    def randn(cls, shape):
+        def make_nested(shape):
+            if len(shape) == 1:
+                return [random.gauss(0, 1) for _ in range(shape[0])]
             return [make_nested(shape[1:]) for _ in range(shape[0])]
         return cls(make_nested(shape))
 

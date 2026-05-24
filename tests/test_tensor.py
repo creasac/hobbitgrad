@@ -1,5 +1,5 @@
 from hobbitgrad.tensor import Tensor
-from hobbitgrad.matlib import NDArray
+from hobbitgrad.array import NDArray
 
 
 def test_tensor_initializes_data_and_grad():

@@ -1,3 +1,5 @@
+import itertools
+
 class NDArray:
     def __init__(self, data, shape=None, strides=None):
         if shape is not None:
@@ -7,6 +9,22 @@ class NDArray:
         else:
             self.data, self.shape = self._flatten(data)
             self.strides = self._compute_strides(self.shape)
+
+    @classmethod
+    def zeros(cls, shape):
+        def make_nested(shape):
+            if len(shape) == 1:
+                return [0] * shape[0]
+            return [make_nested(shape[1:]) for _ in range(shape[0])]
+        return cls(make_nested(shape))
+    
+    @classmethod
+    def ones(cls, shape):
+        def make_nested(shape):
+            if len(shape) == 1:
+                return [1] * shape[0]
+            return [make_nested(shape[1:]) for _ in range(shape[0])]
+        return cls(make_nested(shape))
 
     def _flatten(self, data):
         # recursively go down the nested list to infer shape
@@ -56,7 +74,6 @@ class NDArray:
     
     def _contiguous_data(self):
         # iterate over all indices to order elements logically
-        import itertools
         ranges = [range(s) for s in self.shape]
         return [self.data[self._flat_index(idx)] for idx in itertools.product(*ranges)]
     
@@ -80,6 +97,27 @@ class NDArray:
         for i in range(m):
             for j in range(p):
                 result[(i, j)] = sum(self[(i, k)] * other[(k, j)] for k in range(n))
+        return result
+    
+    def __mul__(self, other):
+        result = NDArray(self.data[:], self.shape)
+        if isinstance(other, NDArray):
+            for i in range(len(self.data)):
+                result.data[i] = self.data[i] * other.data[i]
+        else:
+            for i in range(len(self.data)):
+                result.data[i] = self.data[i] * other
+        return result
+    
+    def __add__(self, other):
+        # todo: handle non-contiguous data later
+        result = NDArray(self.data[:], self.shape)
+        if isinstance(other, NDArray):
+            for i in range(len(self.data)):
+                result.data[i] = self.data[i] + other.data[i]
+        else:
+            for i in range(len(self.data)):
+                result.data[i] = self.data[i] + other # scaler addition
         return result
 
     def __getitem__(self, indices):

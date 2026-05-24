@@ -4,8 +4,8 @@ from hobbitgrad.tensor import Tensor
 def test_tensor_initializes_data_and_grad():
     tensor = Tensor(2)
 
-    assert tensor.data == 2
-    assert tensor.grad == 0
+    assert tensor.data.data[0] == 2
+    assert tensor.grad.data[0] == 0
 
 
 def test_mul_returns_tensor_with_product():
@@ -15,8 +15,8 @@ def test_mul_returns_tensor_with_product():
     out = left * right
 
     assert isinstance(out, Tensor)
-    assert out.data == 6
-    assert out.grad == 0
+    assert out.data.data[0] == 6
+    assert out.grad.data[0] == 0
 
 
 def test_add_returns_tensor_with_sum():
@@ -26,8 +26,8 @@ def test_add_returns_tensor_with_sum():
     out = left + right
 
     assert isinstance(out, Tensor)
-    assert out.data == 5
-    assert out.grad == 0
+    assert out.data.data[0] == 5
+    assert out.grad.data[0] == 0
 
 
 def test_backward_for_mul_sets_operand_grads():
@@ -37,9 +37,9 @@ def test_backward_for_mul_sets_operand_grads():
 
     out.backward()
 
-    assert out.grad == 1
-    assert left.grad == 3
-    assert right.grad == 2
+    assert out.grad.data[0] == 1
+    assert left.grad.data[0] == 3
+    assert right.grad.data[0] == 2
 
 
 def test_backward_for_add_sets_operand_grads():
@@ -49,9 +49,9 @@ def test_backward_for_add_sets_operand_grads():
 
     out.backward()
 
-    assert out.grad == 1
-    assert left.grad == 1
-    assert right.grad == 1
+    assert out.grad.data[0] == 1
+    assert left.grad.data[0] == 1
+    assert right.grad.data[0] == 1
 
 
 def test_backward_through_chained_mul():
@@ -61,9 +61,9 @@ def test_backward_through_chained_mul():
 
     out.backward()
 
-    assert out.data == 12
-    assert left.grad == 12
-    assert right.grad == 4
+    assert out.data.data[0] == 12
+    assert left.grad.data[0] == 12
+    assert right.grad.data[0] == 4
 
 
 def test_backward_through_chained_add():
@@ -74,10 +74,10 @@ def test_backward_through_chained_add():
 
     out.backward()
 
-    assert out.data == 9
-    assert left.grad == 1
-    assert middle.grad == 1
-    assert right.grad == 1
+    assert out.data.data[0] == 9
+    assert left.grad.data[0] == 1
+    assert middle.grad.data[0] == 1
+    assert right.grad.data[0] == 1
 
 
 def test_backward_through_add_and_mul():
@@ -87,9 +87,9 @@ def test_backward_through_add_and_mul():
 
     out.backward()
 
-    assert out.data == 10
-    assert left.grad == 7
-    assert right.grad == 2
+    assert out.data.data[0] == 10
+    assert left.grad.data[0] == 7
+    assert right.grad.data[0] == 2
 
 
 def test_backward_when_tensor_is_reused_in_mul():
@@ -98,8 +98,8 @@ def test_backward_when_tensor_is_reused_in_mul():
 
     out.backward()
 
-    assert out.data == 16
-    assert tensor.grad == 8
+    assert out.data.data[0] == 16
+    assert tensor.grad.data[0] == 8
 
 
 def test_backward_when_tensor_is_reused_in_add():
@@ -108,5 +108,5 @@ def test_backward_when_tensor_is_reused_in_add():
 
     out.backward()
 
-    assert out.data == 8
-    assert tensor.grad == 2
+    assert out.data.data[0] == 8
+    assert tensor.grad.data[0] == 2

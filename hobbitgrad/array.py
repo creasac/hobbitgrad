@@ -86,12 +86,12 @@ class NDArray:
         ranges = [range(s) for s in self.shape]
         return [self.data[self._flat_index(idx)] for idx in itertools.product(*ranges)]
     
-    def __reshape__(self, new_shape):
+    def reshape(self, new_shape):
         assert self._total_elements(new_shape) == len(self.data), "Shape mismatch"
         data = self._contiguous_data() if not self._is_contiguous() else self.data
         return NDArray(data, new_shape)
     
-    def __transpose__(self):
+    def transpose(self):
         return NDArray(self.data, tuple(reversed(self.shape)), tuple(reversed(self.strides)))
     
     def __matmul__(self, other):
@@ -119,14 +119,58 @@ class NDArray:
         return result
     
     def __add__(self, other):
-        # todo: handle non-contiguous data later
-        result = NDArray(self.data[:], self.shape)
-        if isinstance(other, NDArray):
-            for i in range(len(self.data)):
-                result.data[i] = self.data[i] + other.data[i]
-        else:
-            for i in range(len(self.data)):
-                result.data[i] = self.data[i] + other # scaler addition
+        # scaler addition
+        if not isinstance(other, NDArray):
+            result = NDArray(self.data[:], shape=self.shape)
+            for i in range(len(result.data)):
+                result.data[i] += other
+            return result
+
+        lss, lso = len(self.shape), len(other.shape)
+        if lss > lso:
+            new_shape = (1,) * (lss - lso) + other.shape
+            other = other.reshape(new_shape)
+        elif lso > lss:
+            new_shape = (1,) * (lso - lss) + self.shape
+            self = self.reshape(new_shape)
+
+        result_shape = tuple(max(s, o) for s, o in zip(self.shape, other.shape))
+        self = self.expand(result_shape)
+        other = other.expand(result_shape)
+
+        result = NDArray.zeros(result_shape)
+        for idx in itertools.product(*[range(s) for s in result_shape]):
+            result[idx] = self[idx] + other[idx]
+        return result
+    
+    def sum(self, axis):
+        if axis == None:
+            return sum(self.data)
+        
+        # initialize empty array with the target shape
+        out_shape = tuple(s for i, s in enumerate(self.shape) if i != axis)
+        result = NDArray.zeros(out_shape)
+
+        # sum across the given axis
+        ranges = [range(s) for s in self.shape]
+        for idx in itertools.product(*ranges):
+            out_idx = tuple(s for i, s in enumerate(idx) if i != axis)
+            result[out_idx] += self[idx]
+
+        return result
+    
+    def expand(self, new_shape):
+        assert len(self.shape) == len(new_shape), "ndim mismatch"
+        for i, (s, sn) in enumerate(zip(self.shape, new_shape)):
+            assert s == sn or s == 1, f"incompatible shapes at dim {i}"
+
+        result = NDArray.zeros(new_shape)
+
+        ranges = [range(s) for s in new_shape]
+        for idx in itertools.product(*ranges):
+            src_idx = tuple(0 if self.shape[i] == 1 else idx[i] for i in range(len(idx)))
+            result[idx] = self[src_idx]
+
         return result
 
     def __getitem__(self, indices):

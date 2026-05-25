@@ -53,8 +53,8 @@ class Tensor:
         out._prev = {self, other}
 
         def _backward():
-            self.grad += out.grad @ other.data.__transpose__()
-            other.grad += self.data.__transpose__() @ out.grad
+            self.grad += out.grad @ other.data.transpose()
+            other.grad += self.data.transpose() @ out.grad
 
         out._backward = _backward
         return out

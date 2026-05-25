@@ -151,7 +151,7 @@ def test_contiguous_data():
 def test_reshape_1d_to_2d():
     arr = NDArray([1, 2, 3, 4])
 
-    reshaped = arr.__reshape__((2, 2))
+    reshaped = arr.reshape((2, 2))
 
     assert reshaped.shape == (2, 2)
     assert reshaped.data == [1, 2, 3, 4]
@@ -164,7 +164,7 @@ def test_reshape_1d_to_2d():
 def test_reshape_2d_to_1d():
     arr = NDArray([[1, 2], [3, 4]])
 
-    reshaped = arr.__reshape__((4,))
+    reshaped = arr.reshape((4,))
 
     assert reshaped.shape == (4,)
     assert reshaped.data == [1, 2, 3, 4]
@@ -176,13 +176,13 @@ def test_reshape_shape_mismatch():
     arr = NDArray([1, 2, 3, 4])
 
     with pytest.raises(AssertionError, match="Shape mismatch"):
-        arr.__reshape__((3, 2))
+        arr.reshape((3, 2))
 
 
 def test_transpose_2d():
     arr = NDArray([[1, 2, 3], [4, 5, 6]])
 
-    transposed = arr.__transpose__()
+    transposed = arr.transpose()
 
     assert transposed.shape == (3, 2)
     assert transposed.strides == (1, 3)
@@ -198,7 +198,7 @@ def test_transpose_3d():
         [[5, 6], [7, 8]],
     ])
 
-    transposed = arr.__transpose__()
+    transposed = arr.transpose()
 
     assert transposed.shape == (2, 2, 2)
     assert transposed.strides == (1, 2, 4)
@@ -210,7 +210,7 @@ def test_transpose_3d():
 
 def test_transpose_setitem_updates_original_data():
     arr = NDArray([[1, 2], [3, 4]])
-    transposed = arr.__transpose__()
+    transposed = arr.transpose()
 
     transposed[(0, 1)] = 99
 
@@ -222,7 +222,7 @@ def test_transpose_setitem_updates_original_data():
 def test_transpose_is_not_contiguous():
     arr = NDArray([[1, 2, 3], [4, 5, 6]])
 
-    transposed = arr.__transpose__()
+    transposed = arr.transpose()
 
     assert transposed._is_contiguous() is False
     assert transposed._contiguous_data() == [1, 4, 2, 5, 3, 6]
@@ -244,7 +244,7 @@ def test_matmul_returns_matrix_product():
 
 def test_matmul_with_transposed_operand():
     left = NDArray([[1, 2, 3], [4, 5, 6]])
-    right = NDArray([[7, 9, 11], [8, 10, 12]]).__transpose__()
+    right = NDArray([[7, 9, 11], [8, 10, 12]]).transpose()
 
     out = left @ right
 
@@ -288,6 +288,158 @@ def test_add_with_scalar_returns_shifted_array():
 
     assert out.shape == (2, 2)
     assert out.data == [11, 12, 13, 14]
+
+
+def test_add_broadcasts_row_vector():
+    left = NDArray([[1, 2, 3], [4, 5, 6]])
+    right = NDArray([[10, 20, 30]])
+
+    out = left + right
+
+    assert out.shape == (2, 3)
+    assert out.data == [11, 22, 33, 14, 25, 36]
+
+
+def test_add_broadcasts_column_vector():
+    left = NDArray([[1, 2, 3], [4, 5, 6]])
+    right = NDArray([[10], [20]])
+
+    out = left + right
+
+    assert out.shape == (2, 3)
+    assert out.data == [11, 12, 13, 24, 25, 26]
+
+
+def test_add_broadcasts_1d_array_to_matrix_rows():
+    left = NDArray([[1, 2, 3], [4, 5, 6]])
+    right = NDArray([10, 20, 30])
+
+    out = left + right
+
+    assert out.shape == (2, 3)
+    assert out.data == [11, 22, 33, 14, 25, 36]
+
+
+def test_add_broadcasts_when_left_has_fewer_dimensions():
+    left = NDArray([10, 20, 30])
+    right = NDArray([[1, 2, 3], [4, 5, 6]])
+
+    out = left + right
+
+    assert out.shape == (2, 3)
+    assert out.data == [11, 22, 33, 14, 25, 36]
+
+
+def test_add_broadcasts_3d_singleton_dimensions():
+    left = NDArray([
+        [[1, 2, 3]],
+        [[4, 5, 6]],
+    ])
+    right = NDArray([[
+        [10],
+        [20],
+    ]])
+
+    out = left + right
+
+    assert out.shape == (2, 2, 3)
+    assert out.data == [11, 12, 13, 21, 22, 23, 14, 15, 16, 24, 25, 26]
+
+
+def test_add_rejects_incompatible_broadcast_shapes():
+    left = NDArray([[1, 2], [3, 4]])
+    right = NDArray([[10, 20, 30]])
+
+    with pytest.raises(AssertionError, match="incompatible shapes"):
+        left + right
+
+
+def test_sum_without_axis_returns_scalar_total():
+    arr = NDArray([[1, 2, 3], [4, 5, 6]])
+
+    out = arr.sum(axis=None)
+
+    assert out == 21
+
+
+def test_sum_axis_0_returns_column_totals():
+    arr = NDArray([[1, 2, 3], [4, 5, 6]])
+
+    out = arr.sum(axis=0)
+
+    assert out.shape == (3,)
+    assert out.data == [5, 7, 9]
+
+
+def test_sum_axis_1_returns_row_totals():
+    arr = NDArray([[1, 2, 3], [4, 5, 6]])
+
+    out = arr.sum(axis=1)
+
+    assert out.shape == (2,)
+    assert out.data == [6, 15]
+
+
+def test_sum_3d_axis_1_returns_reduced_array():
+    arr = NDArray([
+        [[1, 2], [3, 4], [5, 6]],
+        [[7, 8], [9, 10], [11, 12]],
+    ])
+
+    out = arr.sum(axis=1)
+
+    assert out.shape == (2, 2)
+    assert out.data == [9, 12, 27, 30]
+
+
+def test_sum_uses_logical_indices_for_transposed_array():
+    arr = NDArray([[1, 2, 3], [4, 5, 6]]).transpose()
+
+    out = arr.sum(axis=0)
+
+    assert out.shape == (2,)
+    assert out.data == [6, 15]
+
+
+def test_expand_repeats_singleton_rows():
+    arr = NDArray([[1, 2, 3]])
+
+    out = arr.expand((2, 3))
+
+    assert out.shape == (2, 3)
+    assert out.data == [1, 2, 3, 1, 2, 3]
+
+
+def test_expand_repeats_singleton_columns():
+    arr = NDArray([[1], [2]])
+
+    out = arr.expand((2, 3))
+
+    assert out.shape == (2, 3)
+    assert out.data == [1, 1, 1, 2, 2, 2]
+
+
+def test_expand_keeps_matching_dimensions():
+    arr = NDArray([[1, 2], [3, 4]])
+
+    out = arr.expand((2, 2))
+
+    assert out.shape == (2, 2)
+    assert out.data == [1, 2, 3, 4]
+
+
+def test_expand_rejects_ndim_mismatch():
+    arr = NDArray([[1, 2, 3]])
+
+    with pytest.raises(AssertionError, match="ndim mismatch"):
+        arr.expand((2, 1, 3))
+
+
+def test_expand_rejects_incompatible_shapes():
+    arr = NDArray([[1, 2, 3], [4, 5, 6]])
+
+    with pytest.raises(AssertionError, match="incompatible shapes"):
+        arr.expand((3, 3))
 
 
 def test_matmul_rejects_non_2d_operands():

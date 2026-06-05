@@ -177,6 +177,30 @@ class NDArray:
         for i in range(len(self.data)):
             self.data[i] -= other.data[i]
         return self
+    
+    def __sub__(self, other):
+        if not isinstance(other, NDArray):
+            result = NDArray(self.data[:], self.shape)
+            for i in range(len(self.data)):
+                result.data[i] = self.data[i] - other
+            return result
+
+        lss, lso = len(self.shape), len(other.shape)
+        if lss > lso:
+            new_shape = (1,) * (lss - lso) + other.shape
+            other = other.reshape(new_shape)
+        elif lso > lss:
+            new_shape = (1,) * (lso - lss) + self.shape
+            self = self.reshape(new_shape)
+
+        result_shape = tuple(max(s, o) for s, o in zip(self.shape, other.shape))
+        self = self.expand(result_shape)
+        other = other.expand(result_shape)
+
+        result = NDArray.zeros(result_shape)
+        for idx in itertools.product(*[range(s) for s in result_shape]):
+            result[idx] = self[idx] - other[idx]
+        return result
 
     def __getitem__(self, indices):
         if not isinstance(indices, tuple):

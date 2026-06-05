@@ -1,5 +1,13 @@
 from hobbitgrad.array import NDArray
 
+def _reshape_to_sum(grad, target_shape):
+    # pad target shape with leading 1s to match grad ndim
+    padded = (1,) * (len(grad.shape) - len(target_shape)) + target_shape
+    for i in range(len(grad.shape) - 1, -1, -1):
+        if padded[i] == 1 and grad.shape[i] != 1:
+            grad = grad.sum(i)
+    return grad.reshape(target_shape)
+
 class Tensor:
     def __init__(self, data):
         if not isinstance(data, NDArray):
@@ -41,20 +49,24 @@ class Tensor:
         out = Tensor(self.data + other.data)
         out._prev = {self, other}
 
-        def _backward():
-            def reshape_to_sum(grad, target_shape):
-                # pad target shape with leading 1s to match grad ndim
-                padded = (1,) * (len(grad.shape) - len(target_shape)) + target_shape
-                for i in range(len(grad.shape) - 1, -1, -1):
-                    if padded[i] == 1 and grad.shape[i] != 1:
-                        grad = grad.sum(i)
-                return grad.reshape(target_shape)
-            
-            self.grad += reshape_to_sum(out.grad, self.data.shape)
-            other.grad += reshape_to_sum(out.grad, other.data.shape)
+        def _backward():            
+            self.grad += _reshape_to_sum(out.grad, self.data.shape)
+            other.grad += _reshape_to_sum(out.grad, other.data.shape)
         
         out._backward = _backward
         return out
+        
+    def __sub__(self, other):
+        out = Tensor(self.data - other.data)
+        out._prev = {self, other}
+
+        def _backward():
+            self.grad += _reshape_to_sum(out.grad, self.data.shape)
+            other.grad += _reshape_to_sum(out.grad * -1, other.data.shape)
+        
+        out._backward = _backward
+        return out
+        
     
     def __matmul__(self, other):
         out = Tensor(self.data @ other.data)

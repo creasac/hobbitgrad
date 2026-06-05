@@ -50,6 +50,17 @@ def test_add_returns_tensor_with_sum():
     assert out.grad.data[0] == 0
 
 
+def test_sub_returns_tensor_with_difference():
+    left = Tensor(5)
+    right = Tensor(3)
+
+    out = left - right
+
+    assert isinstance(out, Tensor)
+    assert out.data.data[0] == 2
+    assert out.grad.data[0] == 0
+
+
 def test_sum_returns_tensor_with_scalar_total():
     tensor = Tensor([[1, 2, 3], [4, 5, 6]])
 
@@ -84,6 +95,18 @@ def test_backward_for_add_sets_operand_grads():
     assert out.grad.data[0] == 1
     assert left.grad.data[0] == 1
     assert right.grad.data[0] == 1
+
+
+def test_backward_for_sub_sets_operand_grads():
+    left = Tensor(5)
+    right = Tensor(3)
+    out = left - right
+
+    out.backward()
+
+    assert out.grad.data[0] == 1
+    assert left.grad.data[0] == 1
+    assert right.grad.data[0] == -1
 
 
 def test_backward_for_sum_sets_input_grad_to_ones():
@@ -151,6 +174,36 @@ def test_backward_for_add_sums_left_operand_broadcast_grad():
     assert left.grad.data == [2, 2, 2]
     assert right.grad.shape == (2, 3)
     assert right.grad.data == [1, 1, 1, 1, 1, 1]
+
+
+def test_backward_for_sub_sums_broadcasted_right_operand_grad():
+    left = Tensor([[10, 20, 30], [40, 50, 60]])
+    right = Tensor([1, 2, 3])
+    out = left - right
+
+    out.backward()
+
+    assert out.data.shape == (2, 3)
+    assert out.data.data == [9, 18, 27, 39, 48, 57]
+    assert left.grad.shape == (2, 3)
+    assert left.grad.data == [1, 1, 1, 1, 1, 1]
+    assert right.grad.shape == (3,)
+    assert right.grad.data == [-2, -2, -2]
+
+
+def test_backward_for_sub_sums_broadcasted_left_operand_grad():
+    left = Tensor([10, 20, 30])
+    right = Tensor([[1, 2, 3], [4, 5, 6]])
+    out = left - right
+
+    out.backward()
+
+    assert out.data.shape == (2, 3)
+    assert out.data.data == [9, 18, 27, 6, 15, 24]
+    assert left.grad.shape == (3,)
+    assert left.grad.data == [2, 2, 2]
+    assert right.grad.shape == (2, 3)
+    assert right.grad.data == [-1, -1, -1, -1, -1, -1]
 
 
 def test_backward_through_chained_mul():

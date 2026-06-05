@@ -290,6 +290,54 @@ def test_add_with_scalar_returns_shifted_array():
     assert out.data == [11, 12, 13, 14]
 
 
+def test_sub_returns_elementwise_difference():
+    left = NDArray([[10, 20], [30, 40]])
+    right = NDArray([[1, 2], [3, 4]])
+
+    out = left - right
+
+    assert out.shape == (2, 2)
+    assert out.data == [9, 18, 27, 36]
+
+
+def test_sub_with_scalar_returns_shifted_array():
+    arr = NDArray([[10, 20], [30, 40]])
+
+    out = arr - 5
+
+    assert out.shape == (2, 2)
+    assert out.data == [5, 15, 25, 35]
+
+
+def test_sub_does_not_mutate_left_operand():
+    arr = NDArray([[10, 20], [30, 40]])
+
+    out = arr - 5
+
+    assert out is not arr
+    assert arr.data == [10, 20, 30, 40]
+
+
+def test_sub_broadcasts_1d_array_to_matrix_rows():
+    left = NDArray([[10, 20, 30], [40, 50, 60]])
+    right = NDArray([1, 2, 3])
+
+    out = left - right
+
+    assert out.shape == (2, 3)
+    assert out.data == [9, 18, 27, 39, 48, 57]
+
+
+def test_sub_broadcasts_when_left_has_fewer_dimensions():
+    left = NDArray([10, 20, 30])
+    right = NDArray([[1, 2, 3], [4, 5, 6]])
+
+    out = left - right
+
+    assert out.shape == (2, 3)
+    assert out.data == [9, 18, 27, 6, 15, 24]
+
+
 def test_add_broadcasts_row_vector():
     left = NDArray([[1, 2, 3], [4, 5, 6]])
     right = NDArray([[10, 20, 30]])

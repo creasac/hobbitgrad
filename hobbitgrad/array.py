@@ -94,6 +94,36 @@ class NDArray:
     def transpose(self):
         return NDArray(self.data, tuple(reversed(self.shape)), tuple(reversed(self.strides)))
     
+    def sum(self, axis):
+        if axis == None:
+            return sum(self.data)
+        
+        # initialize empty array with the target shape
+        out_shape = tuple(s for i, s in enumerate(self.shape) if i != axis)
+        result = NDArray.zeros(out_shape)
+
+        # sum across the given axis
+        ranges = [range(s) for s in self.shape]
+        for idx in itertools.product(*ranges):
+            out_idx = tuple(s for i, s in enumerate(idx) if i != axis)
+            result[out_idx] += self[idx]
+
+        return result
+    
+    def expand(self, new_shape):
+        assert len(self.shape) == len(new_shape), "ndim mismatch"
+        for i, (s, sn) in enumerate(zip(self.shape, new_shape)):
+            assert s == sn or s == 1, f"incompatible shapes at dim {i}"
+
+        result = NDArray.zeros(new_shape)
+
+        ranges = [range(s) for s in new_shape]
+        for idx in itertools.product(*ranges):
+            src_idx = tuple(0 if self.shape[i] == 1 else idx[i] for i in range(len(idx)))
+            result[idx] = self[src_idx]
+
+        return result
+    
     def __matmul__(self, other):
         if len(self.shape) != 2 or len(other.shape) != 2:
             raise ValueError(f"Expected Shape 2D, got {self.shape} and {other.shape}")
@@ -143,35 +173,10 @@ class NDArray:
             result[idx] = self[idx] + other[idx]
         return result
     
-    def sum(self, axis):
-        if axis == None:
-            return sum(self.data)
-        
-        # initialize empty array with the target shape
-        out_shape = tuple(s for i, s in enumerate(self.shape) if i != axis)
-        result = NDArray.zeros(out_shape)
-
-        # sum across the given axis
-        ranges = [range(s) for s in self.shape]
-        for idx in itertools.product(*ranges):
-            out_idx = tuple(s for i, s in enumerate(idx) if i != axis)
-            result[out_idx] += self[idx]
-
-        return result
-    
-    def expand(self, new_shape):
-        assert len(self.shape) == len(new_shape), "ndim mismatch"
-        for i, (s, sn) in enumerate(zip(self.shape, new_shape)):
-            assert s == sn or s == 1, f"incompatible shapes at dim {i}"
-
-        result = NDArray.zeros(new_shape)
-
-        ranges = [range(s) for s in new_shape]
-        for idx in itertools.product(*ranges):
-            src_idx = tuple(0 if self.shape[i] == 1 else idx[i] for i in range(len(idx)))
-            result[idx] = self[src_idx]
-
-        return result
+    def __isub__(self, other):
+        for i in range(len(self.data)):
+            self.data[i] -= other.data[i]
+        return self
 
     def __getitem__(self, indices):
         if not isinstance(indices, tuple):

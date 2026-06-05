@@ -8,3 +8,6 @@ class Linear:
 
     def forward(self, x):
         return x @ self.W + self.b
+    
+    def parameters(self):
+        return [self.W, self.b]

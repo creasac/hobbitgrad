@@ -34,6 +34,17 @@ class Tensor:
         for tensor in reversed(topo):
             tensor._backward()
 
+    def __matmul__(self, other):
+        out = Tensor(self.data @ other.data)
+        out._prev = {self, other}
+
+        def _backward():
+            self.grad += out.grad @ other.data.transpose()
+            other.grad += self.data.transpose() @ out.grad
+
+        out._backward = _backward
+        return out
+
     def __mul__(self, other):
         out = Tensor(self.data * other.data)
         out._prev = {self, other}
@@ -67,18 +78,6 @@ class Tensor:
         out._backward = _backward
         return out
         
-    
-    def __matmul__(self, other):
-        out = Tensor(self.data @ other.data)
-        out._prev = {self, other}
-
-        def _backward():
-            self.grad += out.grad @ other.data.transpose()
-            other.grad += self.data.transpose() @ out.grad
-
-        out._backward = _backward
-        return out
-
     def sum(self):
         out = Tensor(NDArray([self.data.sum(axis=None)]))
         out._prev = {self}

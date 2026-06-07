@@ -138,69 +138,59 @@ class NDArray:
                 result[(i, j)] = sum(self[(i, k)] * other[(k, j)] for k in range(n))
         return result
     
-    def __mul__(self, other):
-        result = NDArray(self.data[:], self.shape)
-        if isinstance(other, NDArray):
-            for i in range(len(self.data)):
-                result.data[i] = self.data[i] * other.data[i]
-        else:
-            for i in range(len(self.data)):
-                result.data[i] = self.data[i] * other
+    def _broadcast_with(self, other):
+        left = self
+        right = other
+
+        ll, lr = len(left.shape), len(right.shape)
+        if ll > lr:
+            right = right.reshape((1,) * (ll - lr) + right.shape)
+        elif lr > ll:
+            left = left.reshape((1,) * (lr - ll) + left.shape)
+
+        result_shape = tuple(max(l, r) for l, r in zip(left.shape, right.shape))
+        left = left.expand(result_shape)
+        right = right.expand(result_shape)
+
+        return left, right, result_shape
+    
+    def _binary_op(self, other, op):
+        if not isinstance(other, NDArray):
+            result = NDArray(self.data[:], self.shape)
+            for i in range(len(result.data)):
+                result.data[i] = op(self.data[i], other)
+            return result
+        
+        left, right, result_shape = self._broadcast_with(other)
+        result = NDArray.zeros(result_shape)
+
+        for idx in itertools.product(*[range(s) for s in result_shape]):
+            result[idx] = op(left[idx], right[idx])
+        
         return result
+    
+    def __mul__(self, other):
+        return self._binary_op(other, lambda a, b: a * b)
     
     def __add__(self, other):
-        # scaler addition
-        if not isinstance(other, NDArray):
-            result = NDArray(self.data[:], shape=self.shape)
-            for i in range(len(result.data)):
-                result.data[i] += other
-            return result
-
-        lss, lso = len(self.shape), len(other.shape)
-        if lss > lso:
-            new_shape = (1,) * (lss - lso) + other.shape
-            other = other.reshape(new_shape)
-        elif lso > lss:
-            new_shape = (1,) * (lso - lss) + self.shape
-            self = self.reshape(new_shape)
-
-        result_shape = tuple(max(s, o) for s, o in zip(self.shape, other.shape))
-        self = self.expand(result_shape)
-        other = other.expand(result_shape)
-
-        result = NDArray.zeros(result_shape)
-        for idx in itertools.product(*[range(s) for s in result_shape]):
-            result[idx] = self[idx] + other[idx]
-        return result
+        return self._binary_op(other, lambda a, b: a + b)
     
+    def __sub__(self, other):
+        return self._binary_op(other, lambda a, b: a - b)
+    
+    def __pow__(self, other):
+        return self._binary_op(other, lambda a, b: a ** b)
+
+    def __truediv__(self, other):
+        return self._binary_op(other, lambda a, b: a / b)
+    
+    def __neg__(self):
+        return self.__mul__(-1)
+
     def __isub__(self, other):
         for i in range(len(self.data)):
             self.data[i] -= other.data[i]
         return self
-    
-    def __sub__(self, other):
-        if not isinstance(other, NDArray):
-            result = NDArray(self.data[:], self.shape)
-            for i in range(len(self.data)):
-                result.data[i] = self.data[i] - other
-            return result
-
-        lss, lso = len(self.shape), len(other.shape)
-        if lss > lso:
-            new_shape = (1,) * (lss - lso) + other.shape
-            other = other.reshape(new_shape)
-        elif lso > lss:
-            new_shape = (1,) * (lso - lss) + self.shape
-            self = self.reshape(new_shape)
-
-        result_shape = tuple(max(s, o) for s, o in zip(self.shape, other.shape))
-        self = self.expand(result_shape)
-        other = other.expand(result_shape)
-
-        result = NDArray.zeros(result_shape)
-        for idx in itertools.product(*[range(s) for s in result_shape]):
-            result[idx] = self[idx] - other[idx]
-        return result
 
     def __getitem__(self, indices):
         if not isinstance(indices, tuple):

@@ -46,6 +46,8 @@ class Tensor:
         return out
 
     def __mul__(self, other):
+        if not isinstance(other, Tensor):
+            other = Tensor(NDArray([other]))
         out = Tensor(self.data * other.data)
         out._prev = {self, other}
 

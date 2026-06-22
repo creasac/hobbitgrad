@@ -50,8 +50,8 @@ class Tensor:
         out._prev = {self, other}
 
         def _backward():
-            self.grad += out.grad * other.data
-            other.grad += out.grad * self.data
+            self.grad += _reshape_to_sum(out.grad * other.data, self.data.shape)
+            other.grad += _reshape_to_sum(out.grad * self.data, other.data.shape)
 
         out._backward = _backward
         return out
@@ -68,15 +68,23 @@ class Tensor:
         return out
         
     def __sub__(self, other):
-        out = Tensor(self.data - other.data)
-        out._prev = {self, other}
-
+        return self + (-other)
+    
+    def __pow__(self, other):
+        out = Tensor(self.data ** other)
+        out._prev = {self}
+        
         def _backward():
-            self.grad += _reshape_to_sum(out.grad, self.data.shape)
-            other.grad += _reshape_to_sum(out.grad * -1, other.data.shape)
+            self.grad += out.grad * (self.data ** (other - 1) * other)
         
         out._backward = _backward
         return out
+    
+    def __truediv__(self, other):
+        return self * other ** -1
+    
+    def __neg__(self):
+        return self * Tensor(NDArray([-1]))
         
     def sum(self):
         out = Tensor(NDArray([self.data.sum(axis=None)]))

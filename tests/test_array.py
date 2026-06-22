@@ -428,6 +428,15 @@ def test_sum_axis_1_returns_row_totals():
     assert out.data == [6, 15]
 
 
+def test_sum_axis_0_on_1d_array_returns_single_value_array():
+    arr = NDArray([1, 2, 3])
+
+    out = arr.sum(axis=0)
+
+    assert out.shape == (1,)
+    assert out.data == [6]
+
+
 def test_sum_3d_axis_1_returns_reduced_array():
     arr = NDArray([
         [[1, 2], [3, 4], [5, 6]],

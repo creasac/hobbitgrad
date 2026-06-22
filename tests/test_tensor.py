@@ -109,6 +109,28 @@ def test_backward_for_sub_sets_operand_grads():
     assert right.grad.data[0] == -1
 
 
+def test_backward_for_pow_sets_base_grad():
+    tensor = Tensor(3)
+    out = tensor ** 2
+
+    out.backward()
+
+    assert out.data.data == [9]
+    assert tensor.grad.data == [6]
+
+
+def test_backward_for_div_sets_operand_grads():
+    left = Tensor(6)
+    right = Tensor(2)
+    out = left / right
+
+    out.backward()
+
+    assert out.data.data == [3.0]
+    assert left.grad.data == [0.5]
+    assert right.grad.data == [-1.5]
+
+
 def test_backward_for_sum_sets_input_grad_to_ones():
     tensor = Tensor([[1, 2, 3], [4, 5, 6]])
     out = tensor.sum()
@@ -132,6 +154,36 @@ def test_backward_through_sum_after_mul_reduces_loss_to_scalar():
     assert left.grad.data == [5, 6, 7, 8]
     assert right.grad.shape == (2, 2)
     assert right.grad.data == [1, 2, 3, 4]
+
+
+def test_backward_for_mul_sums_broadcasted_right_operand_grad():
+    left = Tensor([[1, 2, 3], [4, 5, 6]])
+    right = Tensor([10, 20, 30])
+    out = left * right
+
+    out.backward()
+
+    assert out.data.shape == (2, 3)
+    assert out.data.data == [10, 40, 90, 40, 100, 180]
+    assert left.grad.shape == (2, 3)
+    assert left.grad.data == [10, 20, 30, 10, 20, 30]
+    assert right.grad.shape == (3,)
+    assert right.grad.data == [5, 7, 9]
+
+
+def test_backward_for_mul_sums_broadcasted_left_operand_grad():
+    left = Tensor([10, 20, 30])
+    right = Tensor([[1, 2, 3], [4, 5, 6]])
+    out = left * right
+
+    out.backward()
+
+    assert out.data.shape == (2, 3)
+    assert out.data.data == [10, 40, 90, 40, 100, 180]
+    assert left.grad.shape == (3,)
+    assert left.grad.data == [5, 7, 9]
+    assert right.grad.shape == (2, 3)
+    assert right.grad.data == [10, 20, 30, 10, 20, 30]
 
 
 def test_backward_for_add_sums_broadcasted_row_vector_grad():

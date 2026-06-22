@@ -100,12 +100,16 @@ class NDArray:
         
         # initialize empty array with the target shape
         out_shape = tuple(s for i, s in enumerate(self.shape) if i != axis)
+        if len(out_shape) == 0:
+            out_shape = (1,)
+            
         result = NDArray.zeros(out_shape)
-
         # sum across the given axis
         ranges = [range(s) for s in self.shape]
         for idx in itertools.product(*ranges):
             out_idx = tuple(s for i, s in enumerate(idx) if i != axis)
+            if not out_idx:
+                out_idx = (0,)
             result[out_idx] += self[idx]
 
         return result
@@ -180,12 +184,6 @@ class NDArray:
     
     def __pow__(self, other):
         return self._binary_op(other, lambda a, b: a ** b)
-
-    def __truediv__(self, other):
-        return self._binary_op(other, lambda a, b: a / b)
-    
-    def __neg__(self):
-        return self.__mul__(-1)
 
     def __isub__(self, other):
         for i in range(len(self.data)):

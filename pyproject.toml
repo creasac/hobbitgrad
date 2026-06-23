@@ -5,6 +5,19 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "hobbitgrad"
 version = "0.0.1"
+description = "A tiny educational autograd library."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "Dipesh Timsina" }
+]
+license = "MIT"
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Repository = "https://github.com/creasac/hobbitgrad"
 
 [tool.setuptools]
 packages = ["hobbitgrad"]

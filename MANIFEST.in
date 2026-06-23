@@ -1,0 +1,4 @@
+prune experiments
+prune tests
+prune build
+prune dist

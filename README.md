@@ -1,6 +1,6 @@
 # hobbitgrad
 
-hobbitgrad is a tiny educational autograd library written in pure Python. It includes a small `NDArray`, a `Tensor` type with backpropagation, a linear layer, SGD, and mean squared error loss.
+hobbitgrad is a tiny (hobbit-sized) educational autograd library written in pure Python. It includes a small `NDArray`, a `Tensor` type with backpropagation, a linear layer, SGD, and mean squared error loss.
 
 ## Install
 
